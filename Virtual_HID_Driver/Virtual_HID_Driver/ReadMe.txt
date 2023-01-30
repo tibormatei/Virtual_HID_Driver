@@ -2,32 +2,32 @@
     Virtual_HID_Driver Project Overview
 ========================================================================
 
-This file contains a summary of what you will find in each of the files that make up your project.
+Ff you don't have windows signed driver license, you have to set unsigned driver settings
 
-Virtual_HID_Driver.vcxproj
-    This is the main project file for projects generated using an Application Wizard.
-    It contains information about the version of the product that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+Step1: press Shift + click Restart
+Step2: Troubleshoot > Advanced options > Startup Settings > Restart
+Step3: To install driver without digital signature, press F7 to choose the Disable driver signature enforcement option.
 
-Virtual_HID_Driver.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard.
-    It contains information about the association between the files in your project
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+---------------
 
-Public.h
-    Header file to be shared with applications.
+cmd commands:
 
-Driver.c & Driver.h
-    DriverEntry and WDFDRIVER related functionality and callbacks.
+Install Driver:
+devcon install Virtual_HID_Driver.inf Root\UMDF_Driver_Test1   // example: "USB\VID_0F3F&PID_0101"
 
-Device.c & Device.h
-    WDFDEVICE related functionality and callbacks.
+Enable Device:
+devcon enable Root\UMDF_Driver_Test1
 
-Queue.c & Queue.h
-    WDFQUEUE related functionality and callbacks.
+Remove Device:
+devcon /r remove "Root\UMDF_Driver_Test1"
 
-Trace.h
-    Definitions for WPP tracing.
+Delete Driver:
+pnputil.exe /delete-driver oem16.inf /force
+
+Find Device:
+devcon find *Test1*
+
+Enumerate Drivers:
+pnputil /enum-drivers > driver_List.txt
+
+---------------

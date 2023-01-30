@@ -7,35 +7,61 @@ NTSTATUS VirtualHIDDriverQueueInitialize(_In_ WDFDEVICE Device)
     WDFQUEUE queue;
     NTSTATUS status;
     WDF_IO_QUEUE_CONFIG queueConfig;
+    WDF_OBJECT_ATTRIBUTES queueAttributes;
 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&queueConfig, WdfIoQueueDispatchParallel);
 
-    queueConfig.EvtIoDeviceControl = VirtualHIDDriverEvtIoDeviceControl;
-    queueConfig.EvtIoStop = VirtualHIDDriverEvtIoStop;
+    queueConfig.EvtIoDeviceControl = VirtualHIDDriver_IoDeviceControl;
+    queueConfig.EvtIoRead = VirtualHIDDriver_IoRead;
+    queueConfig.EvtIoWrite = VirtualHIDDriver_IoWrite;
+    queueConfig.EvtIoCanceledOnQueue = VirtualHIDDriver_IoCancel;
+    queueConfig.EvtIoStop = VirtualHIDDriver_IoStop;
 
-    status = WdfIoQueueCreate(Device, &queueConfig, WDF_NO_OBJECT_ATTRIBUTES, &queue);
+    WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&queueAttributes, QUEUE_CONTEXT);
+
+    status = WdfIoQueueCreate(Device, &queueConfig, &queueAttributes, &queue);
 
     if(!NT_SUCCESS(status))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, TRACE_QUEUE, "WdfIoQueueCreate failed %!STATUS!", status);
         return status;
     }
 
     return status;
 }
 
-VOID
-VirtualHIDDriverEvtIoDeviceControl(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t OutputBufferLength, _In_ size_t InputBufferLength, _In_ ULONG IoControlCode)
+VOID VirtualHIDDriver_IoDeviceControl(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t OutputBufferLength, _In_ size_t InputBufferLength, _In_ ULONG IoControlCode)
 {
-    TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_QUEUE, "%!FUNC! Queue 0x%p, Request 0x%p OutputBufferLength %d InputBufferLength %d IoControlCode %d",
-                Queue, Request, (int) OutputBufferLength, (int) InputBufferLength, IoControlCode);
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(OutputBufferLength);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+    UNREFERENCED_PARAMETER(IoControlCode);
 
     WdfRequestComplete(Request, STATUS_SUCCESS);
 
     return;
 }
 
-VOID VirtualHIDDriverEvtIoStop(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ ULONG ActionFlags)
+VOID VirtualHIDDriver_IoRead(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t InputBufferLength)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+}
+
+VOID VirtualHIDDriver_IoWrite(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t InputBufferLength)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(Request);
+    UNREFERENCED_PARAMETER(InputBufferLength);
+}
+
+VOID VirtualHIDDriver_IoCancel(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request)
+{
+    UNREFERENCED_PARAMETER(Queue);
+    UNREFERENCED_PARAMETER(Request);
+}
+
+VOID VirtualHIDDriver_IoStop(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ ULONG ActionFlags)
 {
     TraceEvents(TRACE_LEVEL_INFORMATION, TRACE_QUEUE, "%!FUNC! Queue 0x%p, Request 0x%p ActionFlags %d", Queue, Request, ActionFlags);
 

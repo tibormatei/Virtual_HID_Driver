@@ -1,3 +1,3 @@
 
-DEFINE_GUID (GUID_DEVINTERFACE_VirtualHIDDriver, 0x2462bf5c,0xf51c,0x41ad,0xaa,0xad,0xdf,0x38,0x09,0x9d,0x1d,0x35);
-//                                                             {2462bf5c-f51c-41ad-aaad-df38099d1d35}
+DEFINE_GUID (GUID_DEVINTERFACE_VirtualHIDDriver, 0x4d1e55b2, 0xf16f, 0x11cf, 0x88, 0xcb, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
+//                                                {4d1e55b2-   f16f-   11cf-   88    cb-   00    11    11    00    00    30}
