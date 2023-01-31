@@ -1,3 +1,5 @@
+#pragma once
+
 #include <windows.h>
 #include <wdf.h>
 #include <initguid.h>

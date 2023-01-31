@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "device.tmh"
+#include "loger.h"
 
 
 NTSTATUS VirtualHIDDriverCreateDevice(_Inout_ PWDFDEVICE_INIT DeviceInit)
@@ -9,7 +10,10 @@ NTSTATUS VirtualHIDDriverCreateDevice(_Inout_ PWDFDEVICE_INIT DeviceInit)
     WDFDEVICE device;
     NTSTATUS status;
 
+    write_log_message("VirtualHIDDriverCreateDevice");
+
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&deviceAttributes, DEVICE_CONTEXT);
+    deviceAttributes.EvtCleanupCallback = VirtualHIDDriverCleanupDevice;
 
     status = WdfDeviceCreate(&DeviceInit, &deviceAttributes, &device);
 
@@ -28,4 +32,11 @@ NTSTATUS VirtualHIDDriverCreateDevice(_Inout_ PWDFDEVICE_INIT DeviceInit)
     }
 
     return status;
+}
+
+VOID VirtualHIDDriverCleanupDevice(_In_ WDFOBJECT Device)
+{
+    write_log_message("VirtualHIDDriverCleanupDevice");
+
+    UNREFERENCED_PARAMETER(Device);
 }

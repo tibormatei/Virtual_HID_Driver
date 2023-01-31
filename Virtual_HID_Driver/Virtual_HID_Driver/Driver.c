@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "driver.tmh"
+#include "loger.h"
 
 
 NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT  DriverObject, _In_ PUNICODE_STRING RegistryPath)
@@ -13,6 +14,8 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT  DriverObject, _In_ PUNICODE_STRING Reg
 #else
     WPP_INIT_TRACING(DriverObject, RegistryPath);
 #endif
+
+    write_log_message("DriverEntry");
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.EvtCleanupCallback = DriverContextCleanup;
@@ -36,6 +39,8 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT  DriverObject, _In_ PUNICODE_STRING Reg
 
 NTSTATUS DeviceAdd(_In_ WDFDRIVER Driver, _Inout_ PWDFDEVICE_INIT DeviceInit)
 {
+    write_log_message("DeviceAdd");
+
     UNREFERENCED_PARAMETER(Driver);
 
     NTSTATUS status = VirtualHIDDriverCreateDevice(DeviceInit);
@@ -45,6 +50,10 @@ NTSTATUS DeviceAdd(_In_ WDFDRIVER Driver, _Inout_ PWDFDEVICE_INIT DeviceInit)
 
 VOID DriverContextCleanup(_In_ WDFOBJECT DriverObject)
 {
+    write_log_message("DriverContextCleanup");
+
+    close_logger();
+
     UNREFERENCED_PARAMETER(DriverObject);
 
 #if UMDF_VERSION_MAJOR == 2 && UMDF_VERSION_MINOR == 0

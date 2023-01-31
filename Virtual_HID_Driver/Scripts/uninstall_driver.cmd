@@ -1,0 +1,1 @@
+devcon remove "HID\VID_0F3F&PID_0101" /norestart

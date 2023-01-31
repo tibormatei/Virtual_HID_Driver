@@ -1,3 +1,5 @@
+#pragma once
+
 EXTERN_C_START
 
 typedef struct _QUEUE_CONTEXT {

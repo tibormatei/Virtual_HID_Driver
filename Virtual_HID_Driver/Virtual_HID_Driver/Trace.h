@@ -1,3 +1,5 @@
+#pragma once
+
 #define WPP_CONTROL_GUIDS                                              \
     WPP_DEFINE_CONTROL_GUID(                                           \
         MyDriver1TraceGuid, (6dbd1672,41be,4643,acc0,3000d747c572),    \
