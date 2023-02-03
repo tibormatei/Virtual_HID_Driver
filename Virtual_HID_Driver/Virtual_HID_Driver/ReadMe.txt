@@ -31,3 +31,23 @@ Enumerate Drivers:
 pnputil /enum-drivers > driver_List.txt
 
 ---------------
+
+Running sequence:
+
+DeviceAdd
+VirtualHIDDriverCreateDevice
+VirtualHIDDriverQueueInitialize
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriver_IoDeviceControl
+VirtualHIDDriverCleanupDevice
+DriverContextCleanup
+
+---------------

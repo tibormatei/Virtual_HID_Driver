@@ -1,16 +1,16 @@
 #include "driver.h"
 #include "queue.tmh"
 #include "loger.h"
+#include "hidclass.h"
+#include "hidsdi.h"
 
 
-NTSTATUS VirtualHIDDriverQueueInitialize(_In_ WDFDEVICE Device)
+NTSTATUS VirtualHIDDriver_IoInitialize(_In_ WDFDEVICE Device)
 {
     WDFQUEUE queue;
     NTSTATUS status;
     WDF_IO_QUEUE_CONFIG queueConfig;
     WDF_OBJECT_ATTRIBUTES queueAttributes;
-
-    write_log_message("VirtualHIDDriverQueueInitialize");
 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&queueConfig, WdfIoQueueDispatchParallel);
 
@@ -34,14 +34,30 @@ NTSTATUS VirtualHIDDriverQueueInitialize(_In_ WDFDEVICE Device)
 
 VOID VirtualHIDDriver_IoDeviceControl(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t OutputBufferLength, _In_ size_t InputBufferLength, _In_ ULONG IoControlCode)
 {
-    write_log_message("VirtualHIDDriver_IoDeviceControl");
-
     UNREFERENCED_PARAMETER(Queue);
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
-    UNREFERENCED_PARAMETER(IoControlCode);
 
-    WdfRequestComplete(Request, STATUS_SUCCESS);
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+
+    switch (IoControlCode)
+    {
+        case IOCTL_HID_GET_COLLECTION_INFORMATION:
+            status = GetDeviceAttributes(Request);
+            break;
+
+        case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
+            write_log_message("VirtualHIDDriver_IoDeviceControl - IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS");
+            status = STATUS_SUCCESS;
+            break;
+
+        default:
+            write_log_message("VirtualHIDDriver_IoDeviceControl - default: ");
+            status = STATUS_NOT_IMPLEMENTED;
+            break;
+    }
+
+    WdfRequestComplete(Request, status);
 
     return;
 }
@@ -81,4 +97,25 @@ VOID VirtualHIDDriver_IoStop(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ 
     UNREFERENCED_PARAMETER(ActionFlags);
 
     return;
+}
+
+NTSTATUS GetDeviceAttributes(IN WDFREQUEST Request)
+{
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PHIDD_ATTRIBUTES hiddAttributes = NULL;
+
+    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(HIDD_ATTRIBUTES), &hiddAttributes, NULL);
+    if (!NT_SUCCESS(status))
+    {
+        return status;
+    }
+
+    hiddAttributes->Size = sizeof(HIDD_ATTRIBUTES);
+    hiddAttributes->VendorID = 0x0F3F;
+    hiddAttributes->ProductID = 0x0101;
+    hiddAttributes->VersionNumber = 0x0001;
+
+    WdfRequestSetInformation(Request, sizeof(HIDD_ATTRIBUTES));
+
+    return status;
 }

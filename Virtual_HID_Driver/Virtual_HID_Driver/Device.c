@@ -27,7 +27,7 @@ NTSTATUS VirtualHIDDriverCreateDevice(_Inout_ PWDFDEVICE_INIT DeviceInit)
 
         if (NT_SUCCESS(status))
         {
-            status = VirtualHIDDriverQueueInitialize(device);
+            status = VirtualHIDDriver_IoInitialize(device);
         }
     }
 
