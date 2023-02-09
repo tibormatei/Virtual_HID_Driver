@@ -17,6 +17,7 @@ EVT_WDF_IO_QUEUE_IO_WRITE VirtualHIDDriver_IoWrite;
 EVT_WDF_IO_QUEUE_IO_CANCELED_ON_QUEUE VirtualHIDDriver_IoCancel;
 EVT_WDF_IO_QUEUE_IO_STOP VirtualHIDDriver_IoStop;
 
-NTSTATUS GetDeviceAttributes(IN WDFREQUEST Request);
+NTSTATUS GetCollectionInformation(IN WDFREQUEST Request);
+NTSTATUS SetNumDeviceInputBuffer(IN WDFREQUEST Request);
 
 EXTERN_C_END
