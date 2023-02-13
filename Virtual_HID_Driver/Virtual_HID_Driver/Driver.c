@@ -39,6 +39,8 @@ NTSTATUS DeviceAdd(_In_ WDFDRIVER Driver, _Inout_ PWDFDEVICE_INIT DeviceInit)
 {
     UNREFERENCED_PARAMETER(Driver);
 
+    write_log_message("DeviceAdd");
+
     NTSTATUS status = VirtualHIDDriverCreateDevice(DeviceInit);
 
     return status;
