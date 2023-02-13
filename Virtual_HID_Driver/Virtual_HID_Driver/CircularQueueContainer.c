@@ -1,5 +1,6 @@
 #include "CircularQueueContainer.h"
 #include <stdlib.h>
+#include <string.h>
 #include "Loger.h"
 
 
@@ -20,6 +21,7 @@ CircularQueue* createCircularQueue(int size)
         else
         {
             cq->capacity = 0;
+            cq->actual_size = 0;
         }
     }
 
@@ -53,7 +55,6 @@ void enqueue(CircularQueue* const circularqueue, Data* item)
             {
                 circularqueue->front++;
             }
-            //circularqueue->data_array[circularqueue->front] = *item;
             memcpy(&circularqueue->data_array[circularqueue->front], item, sizeof(Data));
             circularqueue->actual_size++;
         }
@@ -64,8 +65,10 @@ void enqueue(CircularQueue* const circularqueue, Data* item)
     }
 }
 
-void dequeue(CircularQueue* const circularqueue, Data* item)
+bool dequeue(CircularQueue* const circularqueue, Data* item)
 {
+    bool bDequeueIsSucces = false;
+
     if (circularqueue != NULL)
     {
         if (!isEmpty(circularqueue))
@@ -82,6 +85,7 @@ void dequeue(CircularQueue* const circularqueue, Data* item)
             if (item != NULL)
             {
                 memcpy(item, &circularqueue->data_array[circularqueue->rear], sizeof(Data));
+                bDequeueIsSucces = true;
             }
             circularqueue->actual_size--;
         }
@@ -90,10 +94,8 @@ void dequeue(CircularQueue* const circularqueue, Data* item)
             write_log_message("CircularQueue is empty");
         }
     }
-    else
-    {
-        item = NULL;
-    }
+
+    return bDequeueIsSucces;
 }
 
 bool isFull(CircularQueue* const circularqueue)

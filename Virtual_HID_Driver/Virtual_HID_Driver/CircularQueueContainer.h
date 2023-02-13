@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdbool.h>
 
 
@@ -21,6 +26,10 @@ typedef struct _CircularQueue
 CircularQueue* createCircularQueue(int size);
 void destroyCircularQueue(CircularQueue* circularqueue);
 void enqueue(CircularQueue* const circularqueue, Data* item);
-void dequeue(CircularQueue* const circularqueue, Data* item);
+bool dequeue(CircularQueue* const circularqueue, Data* item);
 bool isFull(CircularQueue* const circularqueue);
 bool isEmpty(CircularQueue* const circularqueue);
+
+#ifdef __cplusplus
+}
+#endif
