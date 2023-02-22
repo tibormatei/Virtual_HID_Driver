@@ -11,6 +11,7 @@ NTSTATUS VirtualHIDDriver_IoInitialize(_In_ WDFDEVICE Device)
     NTSTATUS status;
     WDF_IO_QUEUE_CONFIG queueConfig;
     WDF_OBJECT_ATTRIBUTES queueAttributes;
+    PQUEUE_CONTEXT queueContext;
 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&queueConfig, WdfIoQueueDispatchParallel);
 
@@ -29,25 +30,30 @@ NTSTATUS VirtualHIDDriver_IoInitialize(_In_ WDFDEVICE Device)
         return status;
     }
 
+    queueContext = GetQueueContext(queue);
+    queueContext->deviceInputBufferSize = 0;
+
     return status;
 }
 
 VOID VirtualHIDDriver_IoDeviceControl(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t OutputBufferLength, _In_ size_t InputBufferLength, _In_ ULONG IoControlCode)
 {
-    UNREFERENCED_PARAMETER(Queue);
-    UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
 
     NTSTATUS status = STATUS_UNSUCCESSFUL;
 
     switch (IoControlCode)
     {
+        case IOCTL_HID_GET_COLLECTION_DESCRIPTOR:
+            write_log_message("VirtualHIDDriver_IoDeviceControl - IOCTL_HID_GET_COLLECTION_DESCRIPTOR");
+            break;
+
         case IOCTL_HID_GET_COLLECTION_INFORMATION:
-            status = GetCollectionInformation(Request);
+            status = GetCollectionInformation(Request, OutputBufferLength);
             break;
 
         case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
-            status = SetNumDeviceInputBuffer(Request);
+            status = SetNumDeviceInputBuffer(Queue, Request);
             break;
 
         default:
@@ -96,32 +102,45 @@ VOID VirtualHIDDriver_IoStop(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ 
     return;
 }
 
-NTSTATUS GetCollectionInformation(IN WDFREQUEST Request)
+NTSTATUS GetCollectionInformation(IN WDFREQUEST Request, IN size_t OutputBufferLength)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PHID_COLLECTION_INFORMATION hidInformation = NULL;
+    ULONG_PTR information = 0;
 
-    status = WdfRequestRetrieveOutputBuffer(Request, sizeof(HID_COLLECTION_INFORMATION), &hidInformation, NULL);
-    if (!NT_SUCCESS(status))
+    if (OutputBufferLength < sizeof(HID_COLLECTION_INFORMATION))
     {
-        return status;
+        status = STATUS_BUFFER_TOO_SMALL;
+        information = 0;
+    }
+    else
+    {
+        // Copy the HID_COLLECTION_INFORMATION to the output buffer.
+        status = WdfRequestRetrieveOutputBuffer(Request, sizeof(HID_COLLECTION_INFORMATION), &hidInformation, NULL);
+        if (!NT_SUCCESS(status))
+        {
+            return status;
+        }
+
+        hidInformation->DescriptorSize = sizeof(HID_COLLECTION_INFORMATION);
+        hidInformation->VendorID = 0x0F3F;
+        hidInformation->ProductID = 0x0101;
+        hidInformation->VersionNumber = 0x0001;
+        hidInformation->Polled = TRUE;
+
+        information = sizeof(HID_COLLECTION_INFORMATION);
     }
 
-    hidInformation->DescriptorSize = sizeof(HID_COLLECTION_INFORMATION);
-    hidInformation->VendorID = 0x0F3F;
-    hidInformation->ProductID = 0x0101;
-    hidInformation->VersionNumber = 0x0001;
-    hidInformation->Polled = TRUE;
-
-    WdfRequestSetInformation(Request, sizeof(HID_COLLECTION_INFORMATION));
+    WdfRequestSetInformation(Request, information);
 
     return status;
 }
 
-NTSTATUS SetNumDeviceInputBuffer(IN WDFREQUEST Request)
+NTSTATUS SetNumDeviceInputBuffer(IN WDFQUEUE Queue, IN WDFREQUEST Request)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PULONG pInputBuffer = NULL;
+    PQUEUE_CONTEXT queueContext;
 
     status = WdfRequestRetrieveInputBuffer(Request, sizeof(ULONG), &pInputBuffer, NULL);
     if (!NT_SUCCESS(status))
@@ -129,8 +148,8 @@ NTSTATUS SetNumDeviceInputBuffer(IN WDFREQUEST Request)
         return status;
     }
 
-    unsigned long inBuffSize = *pInputBuffer;
-    write_log_number(inBuffSize);
+    queueContext = GetQueueContext(Queue);
+    queueContext->deviceInputBufferSize = *pInputBuffer;
 
     return status;
 }
