@@ -3,6 +3,8 @@
 #include "loger.h"
 #include "hidclass.h"
 #include "hidsdi.h"
+#include "CircularQueueContainer.h"
+#include <string.h>
 
 
 NTSTATUS VirtualHIDDriver_IoInitialize(_In_ WDFDEVICE Device)
@@ -33,6 +35,8 @@ NTSTATUS VirtualHIDDriver_IoInitialize(_In_ WDFDEVICE Device)
     queueContext = GetQueueContext(queue);
     queueContext->deviceInputBufferSize = 0;
 
+    queueContext->device = Device;
+
     return status;
 }
 
@@ -54,6 +58,7 @@ VOID VirtualHIDDriver_IoDeviceControl(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Reque
 
         case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
             status = SetNumDeviceInputBuffer(Queue, Request);
+            createBuffer(Queue);
             break;
 
         default:
@@ -67,20 +72,72 @@ VOID VirtualHIDDriver_IoDeviceControl(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Reque
 
 VOID VirtualHIDDriver_IoRead(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t InputBufferLength)
 {
-    write_log_message("VirtualHIDDriver_IoRead");
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PQUEUE_CONTEXT queueContext;
+    PDEVICE_CONTEXT deviceContext;
+    Data* pData = NULL;
+    size_t buff_length = 0;
+    bool succes_dequeue = false;
 
-    UNREFERENCED_PARAMETER(Queue);
-    UNREFERENCED_PARAMETER(Request);
-    UNREFERENCED_PARAMETER(InputBufferLength);
+    if (InputBufferLength > sizeof(Data))
+    {
+        status = WdfRequestRetrieveOutputBuffer(Request, sizeof(Data), &pData, &buff_length);
+        if (NT_SUCCESS(status))
+        {
+            queueContext = GetQueueContext(Queue);
+            deviceContext = GetDeviceContext(queueContext->device);
+
+            WdfSpinLockAcquire(deviceContext->SpinLock);
+            succes_dequeue = dequeue(queueContext->circularQueue, pData);
+            WdfSpinLockRelease(deviceContext->SpinLock);
+
+            if (succes_dequeue == true)
+            {
+                WdfRequestCompleteWithInformation(Request, status, sizeof(Data));
+            }
+            else
+            {
+                status = STATUS_CANCELLED;
+                WdfRequestComplete(Request, status);
+            }
+        }
+    }
+    else
+    {
+        status = STATUS_CANCELLED;
+        WdfRequestComplete(Request, status);
+    }
 }
 
 VOID VirtualHIDDriver_IoWrite(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request, _In_ size_t InputBufferLength)
 {
-    write_log_message("VirtualHIDDriver_IoWrite");
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PQUEUE_CONTEXT queueContext;
+    PDEVICE_CONTEXT deviceContext;
 
-    UNREFERENCED_PARAMETER(Queue);
-    UNREFERENCED_PARAMETER(Request);
-    UNREFERENCED_PARAMETER(InputBufferLength);
+    if (InputBufferLength <= sizeof(Data))
+    {
+        Data* data;
+
+        status = WdfRequestRetrieveInputBuffer(Request, sizeof(Data), &data, NULL);
+        if (NT_SUCCESS(status))
+        {
+            write_log_message("VirtualHIDDriver_IoWrite get data");
+
+            queueContext = GetQueueContext(Queue);
+            deviceContext = GetDeviceContext(queueContext->device);
+
+            WdfSpinLockAcquire(deviceContext->SpinLock);
+            enqueue(queueContext->circularQueue, data);
+            WdfSpinLockRelease(deviceContext->SpinLock);
+        }
+    }
+    else
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    WdfRequestComplete(Request, status);
 }
 
 VOID VirtualHIDDriver_IoCancel(_In_ WDFQUEUE Queue, _In_ WDFREQUEST Request)
@@ -152,4 +209,11 @@ NTSTATUS SetNumDeviceInputBuffer(IN WDFQUEUE Queue, IN WDFREQUEST Request)
     queueContext->deviceInputBufferSize = *pInputBuffer;
 
     return status;
+}
+
+void createBuffer(IN WDFQUEUE Queue)
+{
+    PQUEUE_CONTEXT queueContext;
+    queueContext = GetQueueContext(Queue);
+    queueContext->circularQueue = createCircularQueue(queueContext->deviceInputBufferSize);
 }

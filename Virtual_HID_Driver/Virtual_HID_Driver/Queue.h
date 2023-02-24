@@ -1,10 +1,14 @@
 #pragma once
 
+#include "CircularQueueContainer.h"
+
 EXTERN_C_START
 
 typedef struct _QUEUE_CONTEXT
 {
     unsigned long deviceInputBufferSize;
+    CircularQueue* circularQueue;
+    WDFDEVICE device;
 
 } QUEUE_CONTEXT, *PQUEUE_CONTEXT;
 
@@ -19,5 +23,7 @@ EVT_WDF_IO_QUEUE_IO_STOP VirtualHIDDriver_IoStop;
 
 NTSTATUS GetCollectionInformation(IN WDFREQUEST Request, IN size_t OutputBufferLength);
 NTSTATUS SetNumDeviceInputBuffer(IN WDFQUEUE Queue, IN WDFREQUEST Request);
+
+void createBuffer(IN WDFQUEUE Queue);
 
 EXTERN_C_END

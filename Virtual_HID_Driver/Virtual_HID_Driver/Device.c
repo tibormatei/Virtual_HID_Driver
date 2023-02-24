@@ -19,12 +19,11 @@ NTSTATUS VirtualHIDDriverCreateDevice(_Inout_ PWDFDEVICE_INIT DeviceInit)
 
     if (NT_SUCCESS(status))
     {
-        deviceContext = DeviceGetContext(device);
-
-        deviceContext->PrivateDeviceData = 0;
+        // Initialize Spinlocks
+        deviceContext = GetDeviceContext(device);
+        WdfSpinLockCreate(&deviceAttributes, &deviceContext->SpinLock);
 
         status = WdfDeviceCreateDeviceInterface(device, &GUID_DEVINTERFACE_VirtualHIDDriver, NULL);
-
         if (NT_SUCCESS(status))
         {
             status = VirtualHIDDriver_IoInitialize(device);
@@ -36,7 +35,12 @@ NTSTATUS VirtualHIDDriverCreateDevice(_Inout_ PWDFDEVICE_INIT DeviceInit)
 
 VOID VirtualHIDDriverCleanupDevice(_In_ WDFOBJECT Device)
 {
-    write_log_message("VirtualHIDDriverCleanupDevice");
+    PDEVICE_CONTEXT deviceContext;
+    PQUEUE_CONTEXT queueContext;
 
-    UNREFERENCED_PARAMETER(Device);
+    deviceContext = GetDeviceContext(Device);
+    WdfSpinLockRelease(deviceContext->SpinLock);
+
+    queueContext = GetQueueContext(Device);
+    destroyCircularQueue(queueContext->circularQueue);
 }
